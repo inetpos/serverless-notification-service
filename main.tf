@@ -13,7 +13,7 @@ provider "aws" {
 
 resource "aws_api_gateway_rest_api" "sns_apigw" {
   name = "${var.name}-sms-api"
-  description = "API for Yummy Teriyaki's SMS application."
+  description = "API for ${var.name} SMS application."
 }
 resource "aws_api_gateway_deployment" "sns_apigw_deploy" {
 
