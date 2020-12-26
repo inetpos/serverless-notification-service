@@ -11,15 +11,49 @@ provider "aws" {
   region = var.region
 }
 
+
+resource "aws_api_gateway_account" "sns_apigw_account" {
+  cloudwatch_role_arn = aws_iam_role.apigw_cloudwatch_role.arn
+}
+
+data "aws_iam_policy" "cloudwatch_apigw_policy" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+resource "aws_iam_role" "apigw_cloudwatch_role" {
+  name = "${var.name}-apigw-cloudwatch-role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "attach_cloudwatch_to_apigw"{
+  role = aws_iam_role.apigw_cloudwatch_role.name
+  policy_arn = data.aws_iam_policy.cloudwatch_apigw_policy.arn
+}
+
 resource "aws_api_gateway_rest_api" "sns_apigw" {
   name = "${var.name}-sms-api"
   description = "API for ${var.name} SMS application."
 }
 resource "aws_api_gateway_deployment" "sns_apigw_deploy" {
-
+  depends_on = [aws_api_gateway_integration.sns_apigw_int]
   rest_api_id = aws_api_gateway_rest_api.sns_apigw.id
   description = "prod deployment"
-  stage_name = var.stage
+  stage_name = "prod"
 }
 
 resource "aws_api_gateway_resource" "sns_apigw_resource" {
@@ -44,7 +78,7 @@ resource "aws_api_gateway_method_response" "sns_apigw_method_response" {
 
 resource "aws_api_gateway_method_settings" "s" {
   rest_api_id = aws_api_gateway_rest_api.sns_apigw.id
-  stage_name  = "prod"
+  stage_name= aws_api_gateway_deployment.sns_apigw_deploy.stage_name
   method_path = "${aws_api_gateway_resource.sns_apigw_resource.path_part}/${aws_api_gateway_method.sns_apigw_method.http_method}"
 
   settings {
@@ -73,7 +107,6 @@ resource "aws_lambda_permission" "sns_api_lambda"{
 
   source_arn = "${aws_api_gateway_rest_api.sns_apigw.execution_arn}/*/*/*"
 }
-
 
 resource "aws_iam_role" "iam_for_lambda" {
   name = "${var.name}-lambda-role"

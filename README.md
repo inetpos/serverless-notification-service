@@ -18,8 +18,9 @@ POST Request can be revised for any of the messaging purposes above.
 
 1. Make sure you have Terraform (>0.13) and aws (>3.0) installed.
 2. Set your AWS Profile. **Note:** region variable in the variables file will override your profile region.
-3. Create ```terraform.tfvars``` file to assign the variables listed in the variables.tf file.
-4. run ```terraform init --var-file terraform.tfvars``` to deploy.
+3. Create your lambda handler and deployment package (if needed). Zip them in a file named "notifications.zip" in the main directory.
+4. Create ```terraform.tfvars``` file to assign the variables listed in the variables.tf file.
+5. run ```terraform init --var-file terraform.tfvars``` to deploy.
 
 ### Future Works:
 
